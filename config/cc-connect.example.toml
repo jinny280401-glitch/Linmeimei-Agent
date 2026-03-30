@@ -1,0 +1,32 @@
+language = "zh-CN"
+data_dir = "~/.cc-connect/data"
+
+# 附件回传
+attachment_send = "on"
+
+# 显示设置
+[display]
+think_truncate = 200
+tool_truncate = 300
+
+# 速率限制（防刷）
+[rate_limit]
+max_per_minute = 10
+max_per_hour = 60
+
+[[projects]]
+name = "lin-meimei"
+work_dir = "~/.qclaw/workspace"
+
+[projects.agent]
+type = "claudecode"
+permission_mode = "dangerously-skip-permissions"
+
+[[projects.platforms]]
+type = "weixin"
+
+[projects.platforms.options]
+token = ""          # cc-connect weixin setup 后自动填入
+allow_from = "*"    # 生产环境改为具体用户ID
+base_url = "https://ilinkai.weixin.qq.com"
+account_id = ""     # setup 后自动填入
