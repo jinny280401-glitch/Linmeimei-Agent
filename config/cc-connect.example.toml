@@ -1,13 +1,16 @@
-language = "zh-CN"
+language = "zh"
 data_dir = "~/.cc-connect/data"
 
 # 附件回传
 attachment_send = "on"
 
-# 显示设置
+# 静默模式：隐藏思考过程和工具调用，只向用户发送纯对话内容
+quiet = true
+
+# 显示设置（0 = 不显示）
 [display]
-think_truncate = 200
-tool_truncate = 300
+thinking_max_len = 0
+tool_max_len = 0
 
 # 速率限制（防刷）
 [rate_limit]
@@ -17,10 +20,12 @@ max_per_hour = 60
 [[projects]]
 name = "lin-meimei"
 work_dir = "~/.qclaw/workspace"
+quiet = true
 
 [projects.agent]
 type = "claudecode"
-permission_mode = "dangerously-skip-permissions"
+  [projects.agent.options]
+  mode = "bypassPermissions"
 
 [[projects.platforms]]
 type = "weixin"
