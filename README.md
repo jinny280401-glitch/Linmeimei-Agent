@@ -1,5 +1,9 @@
 # 林妹妹 Agent
 
+<p align="center">
+  <img src="assets/avatar.png" width="200" alt="林妹妹 - 嘉勤">
+</p>
+
 你的私人投研分析师，住在微信里。
 
 一个基于 Claude Code + OpenClaw 的定制化 AI Agent，集成金融投研6大技能，支持微信一对多服务，每个用户独立记忆隔离。
