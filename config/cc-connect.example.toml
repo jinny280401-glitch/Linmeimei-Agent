@@ -29,6 +29,7 @@ tool_max_len = 0
 name = "lin-meimei"
 work_dir = "~/.qclaw/workspace"
 quiet = true
+show_context_indicator = false    # 隐藏 [ctx: ~XX%] 上下文占用标记
 
 [projects.agent]
 type = "claudecode"
