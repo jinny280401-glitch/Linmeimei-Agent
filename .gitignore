@@ -5,8 +5,9 @@ tools/keys.env
 *.env.local
 .weixin-token.json
 
-# 客户记忆（隐私数据）
+# 客户记忆和档案（隐私数据）
 memory/customers/*.md
+memory/clients/*.md
 
 # cc-connect 运行数据
 .cc-connect/data/
