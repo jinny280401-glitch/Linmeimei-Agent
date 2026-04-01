@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  lin-meimei:
+    build: .
+    container_name: lin-meimei-agent
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - WORKSPACE_DIR=/app/workspace
+      - DATA_DIR=/app/data
+      - USERS_DB_DIR=/app/data/users
+    volumes:
+      # 持久化用户数据（SQLite 数据库）
+      - user_data:/app/data
+      # 持久化 Claude Code OAuth 凭证
+      - claude_auth:/root/.claude
+      # workspace 可以挂载本地目录方便热更新人设
+      # - ./workspace:/app/workspace
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  user_data:
+    name: linmeimei-user-data
+  claude_auth:
+    name: linmeimei-claude-auth
