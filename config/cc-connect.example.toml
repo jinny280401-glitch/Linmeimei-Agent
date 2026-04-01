@@ -1,22 +1,28 @@
+# ============================================
+# 林妹妹 Agent · cc-connect 配置
+# 位置: ~/.cc-connect/config.toml
+# ============================================
+
 language = "zh"
 data_dir = "~/.cc-connect/data"
 
-# 附件回传
+# 附件回传（图片、文件等）
 attachment_send = "on"
 
 # 静默模式：隐藏思考过程和工具调用，只向用户发送纯对话内容
 quiet = true
 
-# 显示设置（0 = 不显示）
+# 显示设置（0 = 不显示思考/工具过程）
 [display]
 thinking_max_len = 0
 tool_max_len = 0
 
 # 速率限制（防刷）
 [rate_limit]
-max_per_minute = 10
-max_per_hour = 60
+# max_per_minute = 10
+# max_per_hour = 60
 
+# ---- 项目配置 ----
 [[projects]]
 name = "lin-meimei"
 work_dir = "~/.qclaw/workspace"
@@ -27,11 +33,12 @@ type = "claudecode"
   [projects.agent.options]
   mode = "bypassPermissions"
 
+# ---- 微信平台 ----
 [[projects.platforms]]
 type = "weixin"
 
 [projects.platforms.options]
-token = ""          # cc-connect weixin setup 后自动填入
-allow_from = "*"    # 生产环境改为具体用户ID
+token = ""            # 运行 cc-connect weixin setup 后自动填入
+allow_from = "*"      # 生产环境建议改为具体用户ID（逗号分隔）
 base_url = "https://ilinkai.weixin.qq.com"
-account_id = ""     # setup 后自动填入
+account_id = ""       # setup 后自动填入

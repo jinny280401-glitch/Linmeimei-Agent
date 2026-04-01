@@ -31,8 +31,8 @@
 ### 本地部署（Mac）
 
 ```bash
-git clone https://github.com/jinny280401-glitch/lin-meimei-agent.git
-cd lin-meimei-agent
+git clone https://github.com/jinny280401-glitch/Linmeimei-Agent.git
+cd Linmeimei-Agent
 cp .env.example .env    # 填入你的 API 密钥
 chmod +x install.sh
 ./install.sh
@@ -41,8 +41,8 @@ chmod +x install.sh
 ### 云服务器部署（Ubuntu）
 
 ```bash
-git clone https://github.com/jinny280401-glitch/lin-meimei-agent.git
-cd lin-meimei-agent
+git clone https://github.com/jinny280401-glitch/Linmeimei-Agent.git
+cd Linmeimei-Agent
 cp .env.example .env    # 填入你的 API 密钥
 chmod +x deploy.sh
 ./deploy.sh
