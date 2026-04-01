@@ -65,11 +65,11 @@ chmod +x deploy.sh
 nano ~/.env
 ```
 
-将以下两行改为你自己的密钥：
+将以下两行改为你自己的密钥（支持多 Key 逗号分隔轮询）：
 
 ```
-TAVILY_API_KEY=你的Tavily密钥
-BRAVE_API_KEY=你的Brave密钥
+TAVILY_KEYS=你的Tavily密钥
+BRAVE_KEYS=你的Brave密钥
 ```
 
 按 `Ctrl+O` 保存，`Ctrl+X` 退出。
