@@ -8,13 +8,19 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
-async def ask_claude(prompt: str, user_context: str = "", skill_hint: str = "") -> str:
+async def ask_claude(
+    prompt: str,
+    user_context: str = "",
+    skill_hint: str = "",
+    use_plan: bool = False,
+) -> str:
     """调用 Claude Code CLI 处理消息
 
     Args:
         prompt: 用户消息
         user_context: 用户上下文（记忆摘要）
         skill_hint: 技能提示（告诉 Claude 使用哪个 skill）
+        use_plan: 是否使用 plan 模式（复杂任务先规划再执行）
 
     Returns:
         Claude 的纯文本回复
@@ -55,9 +61,13 @@ async def ask_claude(prompt: str, user_context: str = "", skill_hint: str = "") 
         "--no-input",        # 不等待用户输入
         "--output-format", "text",
         "--system-prompt", system_prompt,
-        "--max-turns", "3",  # 限制工具调用轮数
+        "--max-turns", "5" if use_plan else "3",
         prompt,
     ]
+
+    # plan 模式：复杂任务（投研分析、客户沙盘等）先规划再执行
+    if use_plan:
+        cmd.insert(1, "--plan")
 
     try:
         process = await asyncio.create_subprocess_exec(

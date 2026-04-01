@@ -127,24 +127,25 @@ async def _process_message(msg: IncomingMessage) -> None:
         user_context = memory.get_user_context(msg.user_id)
 
         # 4. 意图路由
-        skill_name, skill_prompt = match_skill(msg.content)
+        skill = match_skill(msg.content)
 
-        # 5. 调用 Claude
+        # 5. 调用 Claude（复杂技能自动启用 plan 模式）
         response = await ask_claude(
             prompt=msg.content,
             user_context=user_context,
-            skill_hint=skill_prompt,
+            skill_hint=skill.prompt,
+            use_plan=skill.use_plan,
         )
 
         # 6. 保存 Agent 回复
-        memory.save_message(msg.user_id, "assistant", response, skill_used=skill_name)
+        memory.save_message(msg.user_id, "assistant", response, skill_used=skill.name)
 
         # 7. 回复飞书
         await feishu_client.reply_message(msg.message_id, response)
 
         logger.info(
-            "Processed message from %s, skill=%s, response_len=%d",
-            msg.user_id, skill_name, len(response),
+            "Processed message from %s, skill=%s, plan=%s, response_len=%d",
+            msg.user_id, skill.name, skill.use_plan, len(response),
         )
 
     except Exception:
