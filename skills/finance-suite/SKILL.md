@@ -2,9 +2,9 @@
 name: finance-suite
 version: 1.0.0
 description: >
-  AI金融分析套件。6大技能：看票分析、宏观内参、麦肯锡报告、视频拆解、行业报告、集合竞价。
+  AI金融分析套件。5大技能：看票分析、宏观内参、麦肯锡报告、视频拆解、深度研究（合并行业分析与公司调研）。
   集成东方财富实时数据(AkShare) + Tavily/Brave双搜索引擎 + YouTube/B站字幕提取(Supadata)。
-  触发条件：用户提到"看票"、"分析股票"、"宏观"、"内参"、"咨询报告"、"麦肯锡"、"拆解视频"、"行业分析"、"行业报告"、"集合竞价"、"涨停"等。
+  触发条件：用户提到"看票"、"分析股票"、"宏观"、"内参"、"咨询报告"、"麦肯锡"、"拆解视频"、"研究XX"、"调研XX"、"XX行业"、"行业分析"、"公司调研"、"深度研究"等。
 author: OpenClaw
 license: MIT
 
@@ -42,7 +42,7 @@ metadata:
 
 # Finance Suite — AI金融分析套件
 
-6大专业分析技能，集成东方财富实时数据 + 双搜索引擎 + 视频字幕提取。
+5大专业分析技能，集成东方财富实时数据 + 双搜索引擎 + 视频字幕提取。
 
 ## 技能路由
 
@@ -50,12 +50,13 @@ metadata:
 
 | 触发关键词 | 技能 | Prompt文件 | 数据脚本 |
 |-----------|------|-----------|---------|
-| 看票、分析XX股票、个股、股票代码 | 看票分析 | [prompts/stock-analyst.md](prompts/stock-analyst.md) | scripts/stock_data.py |
+| 看票、分析XX股票、个股、XX能买吗 | 看票分析 | [prompts/stock-analyst.md](prompts/stock-analyst.md) | scripts/stock_data.py |
 | 宏观、内参、经济形势、GDP、CPI | 宏观内参 | [prompts/macro-advisor.md](prompts/macro-advisor.md) | scripts/macro_data.py |
-| 咨询报告、麦肯锡、会议纪要 | 麦肯锡报告 | [prompts/mckinsey-report.md](prompts/mckinsey-report.md) | 无（用户提供资料） |
-| 拆解视频、视频总结、逐字稿 | 视频拆解 | [prompts/video-breakdown.md](prompts/video-breakdown.md) | scripts/video_data.py |
-| 行业分析、行业报告、XX行业 | 行业报告 | [prompts/industry-report.md](prompts/industry-report.md) | scripts/search.py |
-| 集合竞价、涨停、选股信号 | 集合竞价 | [prompts/auction-analysis.md](prompts/auction-analysis.md) | scripts/auction_data.py |
+| 咨询报告、麦肯锡、会议纪要分析 | 麦肯锡报告 | [prompts/mckinsey-report.md](prompts/mckinsey-report.md) | 无（用户提供资料） |
+| 拆解视频、视频总结、逐字稿分析 | 视频拆解 | [prompts/video-breakdown.md](prompts/video-breakdown.md) | scripts/video_data.py |
+| 研究XX、调研XX、XX行业、行业分析、公司调研、深度研究 | 深度研究 | [prompts/deep-research.md](prompts/deep-research.md) | scripts/search.py |
+
+> **看票 vs 深度研究的区分**：「看票」= 短平快的交易视角（财报+资金+技术面），「深度研究」= 长篇的认知构建（行业全景/企业深度）。用户说"帮我看看茅台"走看票，说"帮我研究茅台"走深度研究。
 
 ## 工作流程
 
@@ -89,11 +90,16 @@ python3 scripts/macro_data.py
 python3 scripts/search.py --type macro --query "中国经济最新政策"
 ```
 
-### 集合竞价流程
+### 深度研究流程
 
 ```bash
-# 获取涨停池、强势股、异动、人气排行、飙升榜（6路并发）
-python3 scripts/auction_data.py
+# 深度研究自动判断模式（行业/公司/联合），执行对应搜索
+# 行业模式：搜索行业规模、竞争格局、政策、技术趋势
+python3 scripts/search.py --type industry --query "新能源汽车 市场规模 竞争格局"
+
+# 公司模式：搜索电话会议、年报、公司网站、行业数据
+python3 scripts/search.py --type stock --query "宁德时代 财报电话会议"
+python3 scripts/search.py --type extract --query "宁德时代 annual report"
 ```
 
 ### 视频拆解流程

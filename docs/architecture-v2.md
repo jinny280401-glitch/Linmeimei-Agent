@@ -117,11 +117,10 @@ v2.0 的改进：
 | 技能 | 模块 | 状态 |
 |------|------|------|
 | 看票分析（个股 9 章深度） | finance-suite | 已完成 |
+| 深度研究（行业+公司+联合，三模式） | finance-suite | 已完成 |
 | 宏观内参 | finance-suite | 已完成 |
 | 麦肯锡报告 | finance-suite | 已完成 |
 | 视频拆解 | finance-suite | 已完成 |
-| 行业报告 | finance-suite | 已完成 |
-| 集合竞价 | finance-suite | 已完成 |
 | 微信 24 小时助理 | cc-connect | 已完成（v1 验证） |
 
 ### v2 新增（框架已搭建）

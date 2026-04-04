@@ -21,6 +21,9 @@ class Settings:
     # MiniMax
     minimax_api_key: str = field(default_factory=lambda: os.getenv("MINIMAX_API_KEY", ""))
 
+    # 加密
+    encryption_key: str = field(default_factory=lambda: os.getenv("ENCRYPTION_KEY", ""))
+
     # 路径
     workspace_dir: str = field(default_factory=lambda: os.getenv("WORKSPACE_DIR", "/app/workspace"))
     data_dir: str = field(default_factory=lambda: os.getenv("DATA_DIR", "/app/data"))

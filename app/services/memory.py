@@ -1,13 +1,37 @@
-"""用户记忆管理 — 每用户独立 SQLite"""
+"""用户记忆管理 — 每用户独立 SQLite，敏感字段 Fernet 加密"""
 
 import os
 import sqlite3
 import logging
 from datetime import datetime
+from cryptography.fernet import Fernet, InvalidToken
 from app.config import settings
 from app.models.schemas import UserProfile
 
 logger = logging.getLogger(__name__)
+
+# 加密工具
+_fernet: Fernet | None = None
+if settings.encryption_key:
+    _fernet = Fernet(settings.encryption_key.encode())
+else:
+    logger.warning("ENCRYPTION_KEY 未设置，用户数据将以明文存储")
+
+
+def _encrypt(text: str) -> str:
+    if not text or not _fernet:
+        return text
+    return _fernet.encrypt(text.encode()).decode()
+
+
+def _decrypt(text: str) -> str:
+    if not text or not _fernet:
+        return text
+    try:
+        return _fernet.decrypt(text.encode()).decode()
+    except InvalidToken:
+        # 兼容未加密的历史数据
+        return text
 
 # 建表 SQL
 _INIT_SQL = """
@@ -71,7 +95,10 @@ def get_user_profile(user_id: str) -> UserProfile | None:
             "SELECT * FROM user_profile WHERE user_id = ?", (user_id,)
         ).fetchone()
         if row:
-            return UserProfile(**dict(row))
+            data = dict(row)
+            data["interests"] = _decrypt(data.get("interests", ""))
+            data["notes"] = _decrypt(data.get("notes", ""))
+            return UserProfile(**data)
         return None
     finally:
         conn.close()
@@ -94,7 +121,7 @@ def save_user_profile(profile: UserProfile) -> None:
         """, (
             profile.user_id, profile.user_name, profile.gender,
             profile.call_name, profile.first_seen, profile.last_seen,
-            profile.interests, profile.notes,
+            _encrypt(profile.interests), _encrypt(profile.notes),
         ))
         conn.commit()
     finally:
@@ -112,7 +139,7 @@ def save_message(user_id: str, role: str, content: str, skill_used: str = "") ->
     try:
         conn.execute(
             "INSERT INTO conversations (role, content, skill_used) VALUES (?, ?, ?)",
-            (role, content, skill_used),
+            (role, _encrypt(content), skill_used),
         )
         # 只保留最近 100 轮（200 条消息）
         conn.execute("""
@@ -133,7 +160,12 @@ def get_recent_messages(user_id: str, limit: int = 20) -> list[dict]:
             "SELECT role, content, skill_used, created_at FROM conversations ORDER BY id DESC LIMIT ?",
             (limit,),
         ).fetchall()
-        return [dict(row) for row in reversed(rows)]
+        result = []
+        for row in reversed(rows):
+            d = dict(row)
+            d["content"] = _decrypt(d["content"])
+            result.append(d)
+        return result
     finally:
         conn.close()
 
@@ -145,7 +177,7 @@ def save_key_fact(user_id: str, fact_type: str, fact_key: str, fact_value: str) 
         conn.execute("""
             INSERT INTO key_facts (fact_type, fact_key, fact_value, updated_at)
             VALUES (?, ?, ?, datetime('now', 'localtime'))
-        """, (fact_type, fact_key, fact_value))
+        """, (fact_type, fact_key, _encrypt(fact_value)))
         conn.commit()
     finally:
         conn.close()
