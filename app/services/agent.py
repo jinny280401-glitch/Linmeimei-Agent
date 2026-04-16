@@ -11,7 +11,9 @@ Harness 架构下的职责划分：
 """
 
 import asyncio
+import json
 import logging
+import os
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -23,7 +25,7 @@ async def ask_claude(
     user_context: str = "",
     skill_hint: str = "",
     use_plan: bool = False,
-) -> str:
+) -> tuple[str, str]:
     """调用 Claude Code CLI 处理消息
 
     Args:
@@ -34,7 +36,7 @@ async def ask_claude(
         use_plan: 是否使用 plan 模式
 
     Returns:
-        Claude 的纯文本回复
+        (Claude 的纯文本回复, transcript 文件路径)
     """
     # 兼容旧调用方式（直接传 user_context + skill_hint）
     if not system_prompt and (user_context or skill_hint):
@@ -43,9 +45,8 @@ async def ask_claude(
     # 构建 Claude CLI 命令
     cmd = [
         "claude",
-        "--print",           # 直接输出结果，不进入交互模式
-        "--no-input",        # 不等待用户输入
-        "--output-format", "text",
+        "--print",
+        "--output-format", "json",  # 结构化输出，包含 transcript 路径
         "--max-turns", "5" if use_plan else "3",
     ]
 
@@ -76,11 +77,27 @@ async def ask_claude(
             logger.error("Claude CLI error (code=%d): %s", process.returncode, error_msg)
             raise RuntimeError(f"Claude CLI error: {error_msg}")
 
-        response = stdout.decode().strip()
-        if not response:
-            return "妹妹没听清，你再说一次？"
+        raw = stdout.decode().strip()
+        if not raw:
+            return "妹妹没听清，你再说一次？", ""
 
-        return response
+        # 解析 JSON 输出，提取回复文本和 transcript 路径
+        try:
+            data = json.loads(raw)
+            response = data.get("result", "")
+            transcript_path = data.get("session_id", "")
+            # session_id 转换为 transcript 路径
+            if transcript_path:
+                transcript_path = _session_to_transcript_path(transcript_path)
+        except (json.JSONDecodeError, KeyError):
+            # 降级：直接用原始输出
+            response = raw
+            transcript_path = ""
+
+        if not response:
+            return "妹妹没听清，你再说一次？", ""
+
+        return response, transcript_path
 
     except asyncio.TimeoutError:
         logger.error("Claude CLI timeout after %ds", settings.claude_timeout)
@@ -88,6 +105,16 @@ async def ask_claude(
     except FileNotFoundError:
         logger.error("Claude CLI not found, please install: npm i -g @anthropic-ai/claude-code")
         raise
+
+
+def _session_to_transcript_path(session_id: str) -> str:
+    """将 session_id 转换为 transcript 文件路径
+
+    Claude Code transcript 路径格式：
+    ~/.claude/sessions/{session_id}/transcript.jsonl
+    """
+    home = os.path.expanduser("~")
+    return os.path.join(home, ".claude", "sessions", session_id, "transcript.jsonl")
 
 
 def _build_legacy_prompt(user_context: str, skill_hint: str) -> str:

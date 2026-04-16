@@ -131,7 +131,7 @@ class HarnessEngine:
             return self._compact_summaries.get(user_id, "")
 
         # 用 Claude 生成交接摘要
-        summary = await ask_claude(
+        summary, _ = await ask_claude(
             prompt=compact_prompt,
             system_prompt="你是一个对话摘要助手。请生成简洁的交接摘要，保留关键信息。",
         )
@@ -153,13 +153,7 @@ class HarnessEngine:
         user_id: str,
         max_retries: int = 2,
     ) -> str:
-        """调用 Agent 内核，带错误恢复
-
-        恢复策略：
-        - 第 1 次失败：重试（可能是网络抖动）
-        - 第 2 次失败：简化 prompt 重试（减少 token）
-        - 都失败：返回友好错误消息
-        """
+        """调用 Agent 内核，带错误恢复"""
         last_error = None
 
         for attempt in range(max_retries + 1):
@@ -167,9 +161,7 @@ class HarnessEngine:
                 current_prompt = prompt
                 current_system = system_prompt
 
-                # 第 2 次重试：简化 system prompt（去掉 Layer 3 技能指令）
                 if attempt == 2:
-                    # 退化到只用 Layer 1 + Layer 2
                     current_system = self.prompt_builder.build(
                         user_context=memory.get_user_context(user_id),
                     ).build_system_prompt()
@@ -177,11 +169,16 @@ class HarnessEngine:
                         user_id, "Retry with simplified prompt", "Stripped skill prompt"
                     )
 
-                response = await ask_claude(
+                response, transcript_path = await ask_claude(
                     prompt=current_prompt,
                     system_prompt=current_system,
                     use_plan=use_plan,
                 )
+
+                # 解析 transcript，更新工具调用统计
+                if transcript_path:
+                    self.status_monitor.parse_transcript(transcript_path, user_id)
+
                 return response
 
             except Exception as e:
@@ -196,7 +193,6 @@ class HarnessEngine:
                     f"Attempt {attempt + 1}/{max_retries + 1}",
                 )
 
-        # 所有重试都失败
         logger.error("All retries exhausted for user %s: %s", user_id, str(last_error))
         return "妹妹这边出了点小状况，你稍等一下再问我哈"
 

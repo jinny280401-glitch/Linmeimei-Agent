@@ -65,6 +65,8 @@ class StatusMonitor:
         self._sessions: dict[str, SessionStats] = {}
         # transcript 文件偏移量（增量解析）
         self._transcript_offsets: dict[str, int] = {}
+        # tool_id → tool_name 映射（用于匹配 tool_result）
+        self._tool_id_map: dict[str, str] = {}
 
     def parse_transcript(self, transcript_path: str, user_id: str) -> Optional[SessionStats]:
         """增量解析 transcript JSONL
@@ -141,6 +143,10 @@ class StatusMonitor:
         tool_stats.total_calls += 1
         tool_stats.last_call_time = datetime.now().isoformat()
 
+        # 记录 tool_id → tool_name 映射
+        if tool_id:
+            self._tool_id_map[tool_id] = tool_name
+
         # 记录到 consciousness
         self.consciousness.log(
             trigger="tool_use",
@@ -154,21 +160,17 @@ class StatusMonitor:
         """处理工具结果"""
         tool_id = entry.get("tool_use_id", "")
         is_error = entry.get("is_error", False)
-        content = entry.get("content", "")
 
-        # 从 content 中提取工具名（简化处理）
-        tool_name = "unknown"
-        for name in stats.tool_calls.keys():
-            if name in str(content)[:100]:
-                tool_name = name
-                break
+        # 用 tool_id → tool_name 映射反查
+        tool_name = self._tool_id_map.get(tool_id)
+        if not tool_name or tool_name not in stats.tool_calls:
+            return
 
-        if tool_name in stats.tool_calls:
-            tool_stats = stats.tool_calls[tool_name]
-            if is_error:
-                tool_stats.failed_calls += 1
-            else:
-                tool_stats.success_calls += 1
+        tool_stats = stats.tool_calls[tool_name]
+        if is_error:
+            tool_stats.failed_calls += 1
+        else:
+            tool_stats.success_calls += 1
 
     def _process_usage(self, entry: dict, stats: SessionStats):
         """处理 Token 用量"""
@@ -262,3 +264,23 @@ class StatusMonitor:
         to_remove = [k for k in self._transcript_offsets.keys() if user_id in k]
         for key in to_remove:
             del self._transcript_offsets[key]
+
+        # 清理 tool_id 映射（防止跨会话污染）
+        self._tool_id_map.clear()
+
+    def log_status_snapshot(self, user_id: str):
+        """记录状态快照到 consciousness"""
+        stats = self.get_stats(user_id)
+        if not stats:
+            return
+
+        mcp_summary = self.get_mcp_tool_summary(user_id)
+        active_agents = [a.agent_type for a in stats.active_agents if a.status == "running"]
+
+        self.consciousness.log(
+            trigger="status_snapshot",
+            thought=f"Token: {stats.total_tokens} | MCP工具: {len(mcp_summary)} | 活跃代理: {len(active_agents)}",
+            user_id=user_id,
+            action="snapshot",
+            result=json.dumps(mcp_summary, ensure_ascii=False),
+        )
