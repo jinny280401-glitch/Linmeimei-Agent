@@ -26,6 +26,7 @@ from app.harness.auto_compact import (
     should_compact, build_compact_prompt, compact_messages, KEEP_RECENT_ROUNDS,
 )
 from app.harness.consciousness import ConsciousnessStream
+from app.harness.status_monitor import StatusMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,7 @@ class HarnessEngine:
         self.consciousness = ConsciousnessStream(
             log_dir=f"{settings.data_dir}/consciousness"
         )
+        self.status_monitor = StatusMonitor(self.consciousness)
         # 每用户的压缩摘要缓存
         self._compact_summaries: dict[str, str] = {}
 
@@ -109,6 +111,9 @@ class HarnessEngine:
             skill=skill.name,
             duration_ms=duration_ms,
         )
+
+        # 7. 记录状态快照（MCP 工具调用统计）
+        self.status_monitor.log_status_snapshot(user_id)
 
         return ProcessResult(
             response=response,
