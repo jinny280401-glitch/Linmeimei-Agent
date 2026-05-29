@@ -32,6 +32,32 @@
 
 ---
 
+## 自选股联动（公司研究模式下必须执行）
+
+在开始公司研究之前，先检查该公司是否有历史研究记录：
+
+```bash
+python3 scripts/watchlist.py --action check-research --code "{公司代码}"
+```
+
+根据返回结果：
+- **不在自选中**：正常执行完整研究。研究完成后询问用户是否加入自选。
+- **在自选中，无历史研究**：正常执行完整研究。完成后自动调用 `update-research` 存档。
+- **在自选中，有历史研究**：告知用户上次研究日期和关键发现，询问：
+  > "上次于 {日期} 研究过 {公司名}，关键发现：{摘要}。你希望做增量更新（仅分析新变化）还是完整重研？"
+
+**增量更新模式**：仅搜索上次研究日期之后的新信息（新季度电话会议、最新新闻），输出"跟踪更新报告"而非完整10节报告。重点关注：
+- 新季度电话会议中的新指引
+- B9"言行一致"：对比历史研究中记录的管理层承诺与最新结果
+- 新增的风险或增长触发因素
+
+**研究完成后**：自动调用存档
+```bash
+python3 scripts/watchlist.py --action update-research --code "{代码}" --mode "{模式}" --findings "{关键发现摘要}" --promises "{承诺1;承诺2}"
+```
+
+---
+
 ## 通用规则（两种模式共享）
 
 ### 搜索工具
@@ -161,12 +187,20 @@ search.sh --type industry --query "{行业名称} 技术趋势 创新 研发方�
 search.sh --type industry --query "{公司所属行业} 市场规模 竞争格局 趋势"
 ```
 
-## B-四大信息来源（不可更改，必须执行）
+## B-五大信息来源（不可更改，必须执行）
+
+> **优先级策略**：A股公司优先用 Wind 数据（高质量结构化），海外公司或 Wind 不可用时降级到搜索引擎。
+> 先执行 `python3 scripts/wind_data.py --action connect` 检查 Wind 可用性。
 
 ### 来源1：4份季度电话会议记录
 
-搜索最近四份季度财报电话会议记录。
+**Wind 优先路径**（A股）：
+```bash
+python3 scripts/wind_data.py --action calendar --code "{代码}"
+```
+返回最近4个季度的财报披露日期和预告，结合年报/季报直接提取管理层表态。
 
+**降级搜索路径**：
 ```bash
 search.sh --type extract --query "{公司名称} earnings call transcript Q{最近季度} {年份}"
 search.sh --type stock --query "{公司名称} 财报电话会议 业绩说明会 最近四个季度"
@@ -174,8 +208,15 @@ search.sh --type stock --query "{公司名称} 财报电话会议 业绩说明�
 
 关注：管理层指引、增长目标、资本支出计划、新业务进展、风险披露。
 
-### 来源2：最新年度报告
+### 来源2：最新年度报告与完整财务数据
 
+**Wind 优先路径**（A股）：
+```bash
+python3 scripts/wind_data.py --action financials --code "{代码}"
+```
+返回完整三大报表核心字段：营收、净利润、同比、毛利率、净利率、ROE、ROA、资产负债率、经营现金流。
+
+**降级搜索路径**：
 ```bash
 search.sh --type extract --query "{公司名称} annual report {年份} business segments products"
 search.sh --type stock --query "{公司名称} 年报 业务板块 产品描述 商业模式"
@@ -193,8 +234,16 @@ search.sh --type extract --url "{公司官网}/investors"
 
 关注：产品页面、业务板块页面、关于我们、投资者关系板块。
 
-### 来源4：网络搜索
+### 来源4：行业数据与竞争格局
 
+**Wind 优先路径**（A股）：
+```bash
+python3 scripts/wind_data.py --action peers --code "{代码}" --max-peers 10
+python3 scripts/wind_data.py --action valuation --code "{代码}"
+```
+前者返回同行业可比公司的市值、PE、PB、ROE、营收对比表；后者返回10年估值分位。
+
+**降级搜索路径**：
 ```bash
 search.sh --type industry --query "{公司名称} 行业规模 市场份额 竞争格局"
 search.sh --type news --query "{公司名称} latest news analyst report"
@@ -202,7 +251,24 @@ search.sh --type news --query "{公司名称} latest news analyst report"
 
 关注：行业规模、竞争对手、最新资讯、分析师报告。
 
-**数据缺失规则**：电话会议记录尝试所有渠道后仍无法找到，请说明原因并在现有数据基础上继续推进。
+### 来源5：卖方一致预期（Wind 独有，仅A股）
+
+```bash
+python3 scripts/wind_data.py --action consensus --code "{代码}"
+```
+
+返回：
+- 未来3年净利润预测（FY1/FY2/FY3）
+- 一致预期 EPS 和 ROE
+- 覆盖机构数、综合评级
+- 买入/增持/中性数量分布
+- 目标价均值
+
+**使用场景**：与 B9"言行一致"章节交叉验证 — 卖方一致预期 vs 管理层指引 vs 公司实际交付的三方对比。这是 Wind 相比免费数据源的核心增量价值。
+
+**数据缺失规则**：
+- Wind 不可用（电脑关机/未登录）→ 自动降级搜索引擎，在报告顶部标注"本次数据源：搜索引擎，建议开启 Wind 终端后重新研究以获得更精确数据"
+- 电话会议记录尝试所有渠道后仍无法找到，说明原因并继续推进
 
 ## B-报告结构（10节，按此顺序撰写）
 
