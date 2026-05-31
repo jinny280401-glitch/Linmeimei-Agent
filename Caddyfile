@@ -1,0 +1,12 @@
+# Caddy 配置 - 自动 HTTPS
+# 替换 your-domain.com 为你的实际域名
+
+# 如果还没有域名，可以先用 HTTP 测试：
+# :80 {
+#     reverse_proxy lin-meimei-agent:8000
+# }
+
+# 有域名后使用这个配置（Caddy 会自动申请 Let's Encrypt 证书）：
+your-domain.com {
+    reverse_proxy lin-meimei-agent:8000
+}

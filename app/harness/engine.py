@@ -15,12 +15,14 @@
 
 import time
 import logging
+from typing import Optional
 from dataclasses import dataclass
 
 from app.config import settings
 from app.services import memory
-from app.services.agent import ask_claude
-from app.skills.router import match_skill
+from app.services.agent import ask_claude, ask_claude_with_evaluation
+from app.skills.router import match_skill_async
+from app.services.memory import save_quality_score
 from app.harness.prompt_builder import PromptBuilder
 from app.harness.auto_compact import (
     should_compact, build_compact_prompt, compact_messages, KEEP_RECENT_ROUNDS,
@@ -56,7 +58,7 @@ class HarnessEngine:
         self,
         user_id: str,
         content: str,
-        message_context: dict | None = None,
+        message_context: Optional[dict] = None,
     ) -> ProcessResult:
         """处理一条用户消息 — Harness 的核心方法
 
@@ -83,8 +85,17 @@ class HarnessEngine:
             conversation_summary = await self._run_compact(user_id, all_messages)
             compacted = True
 
-        # 3. 意图路由
-        skill = match_skill(content)
+        # 3. 意图路由（LLM 语义分类 + 技能匹配）
+        skill, intent = await match_skill_async(content, user_id)
+
+        # 3.1 记录意图分类到意识流
+        self.consciousness.log(
+            trigger="intent",
+            thought=f"Intent: {intent.label} (conf={intent.confidence:.2f}) {intent.reasoning}",
+            user_id=user_id,
+            action="match_skill_async",
+            result=skill.name,
+        )
 
         # 4. 构建三层 Prompt
         prompt_layers = self.prompt_builder.build(
@@ -94,12 +105,30 @@ class HarnessEngine:
         )
         system_prompt = prompt_layers.build_system_prompt()
 
-        # 5. 调用 Agent 内核（带错误恢复）
-        response = await self._call_agent_with_recovery(
+        # 5. 调用 Agent 内核（带评估和错误恢复）
+        response, transcript_path, eval_result = await self._call_agent_with_recovery(
             prompt=content,
             system_prompt=system_prompt,
             use_plan=skill.use_plan,
             user_id=user_id,
+        )
+
+        # 5.1 保存评估分数
+        save_quality_score(
+            user_id=user_id,
+            accuracy=eval_result.accuracy,
+            completeness=eval_result.completeness,
+            actionability=eval_result.actionability,
+            overall=eval_result.overall,
+            reasoning=eval_result.reasoning,
+        )
+
+        # 5.2 记录评估结果到意识流
+        self.consciousness.log(
+            trigger="evaluation",
+            thought=f"Quality: overall={eval_result.overall:.2f}, passed={eval_result.passed}, reasoning={eval_result.reasoning}",
+            user_id=user_id,
+            action="save_quality_score",
         )
 
         duration_ms = int((time.time() - start_time) * 1000)
@@ -152,8 +181,12 @@ class HarnessEngine:
         use_plan: bool,
         user_id: str,
         max_retries: int = 2,
-    ) -> str:
-        """调用 Agent 内核，带错误恢复"""
+    ) -> tuple[str, str, object]:
+        """调用 Agent 内核，带评估和错误恢复
+
+        Returns:
+            (response, transcript_path, eval_result) 元组
+        """
         last_error = None
 
         for attempt in range(max_retries + 1):
@@ -169,17 +202,20 @@ class HarnessEngine:
                         user_id, "Retry with simplified prompt", "Stripped skill prompt"
                     )
 
-                response, transcript_path = await ask_claude(
+                # 使用带评估的调用
+                response, transcript_path, eval_result = await ask_claude_with_evaluation(
                     prompt=current_prompt,
                     system_prompt=current_system,
                     use_plan=use_plan,
+                    user_id=user_id,
+                    max_retries=0,  # 重试逻辑在 harness 层处理
                 )
 
                 # 解析 transcript，更新工具调用统计
                 if transcript_path:
                     self.status_monitor.parse_transcript(transcript_path, user_id)
 
-                return response
+                return response, transcript_path, eval_result
 
             except Exception as e:
                 last_error = e
@@ -194,7 +230,14 @@ class HarnessEngine:
                 )
 
         logger.error("All retries exhausted for user %s: %s", user_id, str(last_error))
-        return "妹妹这边出了点小状况，你稍等一下再问我哈"
+
+        # 返回降级结果
+        from app.services.evaluator import EvaluationResult
+        fallback_eval = EvaluationResult(
+            accuracy=0.0, completeness=0.0, actionability=0.0,
+            overall=0.0, reasoning="All retries failed", passed=False,
+        )
+        return "妹妹这边出了点小状况，你稍等一下再问我哈", "", fallback_eval
 
     def reload_persona(self):
         """热加载人设文件（不重启服务）"""

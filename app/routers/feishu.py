@@ -81,11 +81,11 @@ async def handle_event(request: Request, background_tasks: BackgroundTasks):
     if not text:
         return {"code": 0}
 
-    # 构建消息对象
-    user_id = sender.get("sender_id", {}).get("open_id", "unknown")
+    # 构建消息对象（添加渠道前缀）
+    open_id = sender.get("sender_id", {}).get("open_id", "unknown")
     msg = IncomingMessage(
-        user_id=user_id,
-        user_name=sender.get("sender_id", {}).get("open_id", ""),
+        user_id=f"feishu_{open_id}",  # 添加渠道前缀避免冲突
+        user_name=open_id,
         chat_id=message_data.get("chat_id", ""),
         chat_type=chat_type,
         content=text,

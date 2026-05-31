@@ -15,6 +15,7 @@ import json
 import logging
 import os
 from app.config import settings
+from app.services.evaluator import get_evaluator, EvaluationResult
 
 logger = logging.getLogger(__name__)
 
@@ -148,3 +149,48 @@ def _build_legacy_prompt(user_context: str, skill_hint: str) -> str:
         system_parts.append(f"\n---\n请使用以下技能处理本次请求：\n{skill_hint}")
 
     return "\n\n".join(system_parts)
+
+
+async def ask_claude_with_evaluation(
+    prompt: str,
+    system_prompt: str = "",
+    user_context: str = "",
+    skill_hint: str = "",
+    use_plan: bool = False,
+    user_id: str = "system",
+    max_retries: int = 2,
+) -> tuple[str, str, EvaluationResult]:
+    """调用 Claude 并对回复进行评估，低分触发重试
+
+    Returns:
+        (回复文本, transcript路径, 评估结果) 元组
+    """
+    evaluator = get_evaluator()
+
+    for attempt in range(max_retries + 1):
+        response, transcript = await ask_claude(
+            prompt=prompt,
+            system_prompt=system_prompt,
+            user_context=user_context,
+            skill_hint=skill_hint,
+            use_plan=use_plan,
+        )
+
+        # 评估回复质量
+        eval_result = await evaluator.evaluate(prompt, response)
+
+        logger.info(
+            "Agent response evaluated: overall=%.2f, passed=%s, attempt=%d, user_id=%s",
+            eval_result.overall, eval_result.passed, attempt + 1, user_id,
+        )
+
+        if eval_result.passed or attempt >= max_retries:
+            return response, transcript, eval_result
+
+        # 低分重试
+        logger.warning(
+            "Response below threshold (%.2f < %.2f), retrying (%d/%d), user_id=%s",
+            eval_result.overall, evaluator.threshold, attempt + 1, max_retries, user_id,
+        )
+
+    return response, transcript, eval_result

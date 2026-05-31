@@ -4,6 +4,7 @@ import os
 import sqlite3
 import logging
 from datetime import datetime
+from typing import Optional
 from cryptography.fernet import Fernet, InvalidToken
 from app.config import settings
 from app.models.schemas import UserProfile
@@ -11,7 +12,7 @@ from app.models.schemas import UserProfile
 logger = logging.getLogger(__name__)
 
 # 加密工具
-_fernet: Fernet | None = None
+_fernet: Optional[Fernet] = None
 if settings.encryption_key:
     _fernet = Fernet(settings.encryption_key.encode())
 else:
@@ -69,6 +70,16 @@ CREATE TABLE IF NOT EXISTS client_files (
     priority_score REAL DEFAULT 0,
     updated_at TEXT DEFAULT (datetime('now', 'localtime'))
 );
+
+CREATE TABLE IF NOT EXISTS quality_scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    accuracy REAL DEFAULT 0,
+    completeness REAL DEFAULT 0,
+    actionability REAL DEFAULT 0,
+    overall REAL DEFAULT 0,
+    reasoning TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now', 'localtime'))
+);
 """
 
 
@@ -87,7 +98,7 @@ def _get_conn(user_id: str) -> sqlite3.Connection:
     return conn
 
 
-def get_user_profile(user_id: str) -> UserProfile | None:
+def get_user_profile(user_id: str) -> Optional[UserProfile]:
     """读取用户画像，不存在返回 None"""
     conn = _get_conn(user_id)
     try:
@@ -209,3 +220,23 @@ def get_user_context(user_id: str) -> str:
             parts.append(f"  {role_label}：{msg['content'][:100]}")
 
     return "\n".join(parts)
+
+
+def save_quality_score(
+    user_id: str,
+    accuracy: float,
+    completeness: float,
+    actionability: float,
+    overall: float,
+    reasoning: str,
+) -> None:
+    """保存评估分数到用户数据库"""
+    conn = _get_conn(user_id)
+    try:
+        conn.execute("""
+            INSERT INTO quality_scores (accuracy, completeness, actionability, overall, reasoning)
+            VALUES (?, ?, ?, ?, ?)
+        """, (accuracy, completeness, actionability, overall, reasoning))
+        conn.commit()
+    finally:
+        conn.close()

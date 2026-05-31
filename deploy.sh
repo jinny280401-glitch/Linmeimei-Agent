@@ -100,10 +100,12 @@ fi
 # ---- 9. 创建 systemd 守护服务 ----
 echo "[9/9] 创建 systemd 守护服务..."
 
-# 找到 cc-connect 和 node 的完整路径
+# 找到 cc-connect、python、node 的完整路径
 CC_CONNECT_PATH=$(which cc-connect)
+PYTHON_PATH=$(which python3)
 NODE_DIR=$(dirname $(which node))
 
+# 1) cc-connect 服务
 sudo tee /etc/systemd/system/lin-meimei.service > /dev/null << SERVICEEOF
 [Unit]
 Description=Lin Meimei Agent (cc-connect)
@@ -123,8 +125,34 @@ EnvironmentFile=$HOME/.env
 WantedBy=multi-user.target
 SERVICEEOF
 
+# 2) FastAPI(uvicorn) 服务
+sudo tee /etc/systemd/system/lin-meimei-api.service > /dev/null << SERVICEEOF
+[Unit]
+Description=Lin Meimei Agent API (uvicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=$USER
+WorkingDirectory=$SCRIPT_DIR
+ExecStart=$PYTHON_PATH -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+EnvironmentFile=$HOME/.env
+Environment=PYTHONPATH=$SCRIPT_DIR
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=lin-meimei-api
+
+[Install]
+WantedBy=multi-user.target
+SERVICEEOF
+
 sudo systemctl daemon-reload
 sudo systemctl enable lin-meimei
+sudo systemctl enable lin-meimei-api
 
 echo ""
 echo "============================================"
@@ -145,6 +173,7 @@ printf "  %-35s %s\n" "林妹妹 workspace + 技能包" "done"
 printf "  %-35s %s\n" "环境变量 ~/.env" "done"
 printf "  %-35s %s\n" "cc-connect 配置" "done"
 printf "  %-35s %s\n" "systemd 服务 lin-meimei" "done"
+printf "  %-35s %s\n" "systemd 服务 lin-meimei-api" "done"
 printf "  %-35s %s\n" "Claude OAuth 登录" "需手动"
 printf "  %-35s %s\n" "微信扫码绑定" "需手动"
 echo ""
@@ -166,11 +195,18 @@ echo "    # 用手机微信扫码"
 echo ""
 echo "  步骤4: 启动服务"
 echo "    sudo systemctl start lin-meimei"
+echo "    sudo systemctl start lin-meimei-api"
 echo ""
 echo "管理命令："
-echo "  启动:  sudo systemctl start lin-meimei"
-echo "  停止:  sudo systemctl stop lin-meimei"
-echo "  重启:  sudo systemctl restart lin-meimei"
-echo "  状态:  sudo systemctl status lin-meimei"
-echo "  日志:  sudo journalctl -u lin-meimei -f"
+echo "  启动(cc):  sudo systemctl start lin-meimei"
+echo "  停止(cc):  sudo systemctl stop lin-meimei"
+echo "  重启(cc):  sudo systemctl restart lin-meimei"
+echo "  状态(cc):  sudo systemctl status lin-meimei"
+echo "  日志(cc):  sudo journalctl -u lin-meimei -f"
+echo ""
+echo "  启动(api): sudo systemctl start lin-meimei-api"
+echo "  停止(api): sudo systemctl stop lin-meimei-api"
+echo "  重启(api): sudo systemctl restart lin-meimei-api"
+echo "  状态(api): sudo systemctl status lin-meimei-api"
+echo "  日志(api): sudo journalctl -u lin-meimei-api -f"
 echo ""

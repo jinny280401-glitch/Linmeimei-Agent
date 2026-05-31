@@ -4,7 +4,7 @@ import os
 import logging
 from fastapi import FastAPI
 from app.config import settings
-from app.routers import feishu, health
+from app.routers import feishu, health, wecom
 
 # 日志配置
 logging.basicConfig(
@@ -24,6 +24,7 @@ app = FastAPI(
 # 注册路由
 app.include_router(health.router)
 app.include_router(feishu.router)
+app.include_router(wecom.router)
 
 
 @app.on_event("startup")
@@ -37,6 +38,10 @@ async def startup():
         logger.warning("FEISHU_APP_ID not set, Feishu integration will not work")
     if not settings.feishu_app_secret:
         logger.warning("FEISHU_APP_SECRET not set, Feishu integration will not work")
+    if not settings.wecom_corp_id:
+        logger.warning("WECOM_CORP_ID not set, WeChat Work integration will not work")
+    if not settings.wecom_secret:
+        logger.warning("WECOM_SECRET not set, WeChat Work integration will not work")
 
     logger.info("林妹妹 Agent v2.0 started")
     logger.info("Workspace: %s", settings.workspace_dir)

@@ -1,0 +1,21 @@
+[Unit]
+Description=Lin Meimei Agent — FastAPI (uvicorn)
+After=network.target
+
+[Service]
+Type=simple
+User={USER}
+WorkingDirectory={PROJECT_DIR}
+ExecStart={PYTHON} -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+EnvironmentFile={HOME}/.env
+Environment=PYTHONPATH={PROJECT_DIR}
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=lin-meimei-api
+
+[Install]
+WantedBy=multi-user.target

@@ -5,8 +5,9 @@ services:
     build: .
     container_name: lin-meimei-agent
     restart: always
-    ports:
-      - "8000:8000"
+    # 不再直接暴露端口，通过 Caddy 反向代理
+    expose:
+      - "8000"
     env_file:
       - .env
     environment:
@@ -26,8 +27,26 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: lin-meimei-caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - lin-meimei
+
 volumes:
   user_data:
     name: linmeimei-user-data
   claude_auth:
     name: linmeimei-claude-auth
+  caddy_data:
+    name: linmeimei-caddy-data
+  caddy_config:
+    name: linmeimei-caddy-config
