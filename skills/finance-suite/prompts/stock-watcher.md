@@ -8,29 +8,29 @@
 
 ### 1. 添加自选
 
-用户说出股票名称或代码，调用脚本添加：
+用户说出股票名称或代码，调用 MCP 工具添加：
 
-```bash
-python3 scripts/watchlist.py --action add --code "{代码}" --name "{名称}" --tags "{标签}"
+```
+watchlist_manage(action="add", code="{代码}", name="{名称}", tags="{标签}")
 ```
 
 添加时可选设置提醒：
-```bash
-python3 scripts/watchlist.py --action add --code "{代码}" --name "{名称}" --alert-above {价格} --alert-below {价格} --alert-change {百分比}
+```
+watchlist_manage(action="add", code="{代码}", name="{名称}", alert_above={价格}, alert_below={价格}, alert_change={百分比})
 ```
 
 添加成功后，简要确认：股票名、代码、当前价格、已设提醒条件。
 
 ### 2. 移除自选
 
-```bash
-python3 scripts/watchlist.py --action remove --code "{代码}"
+```
+watchlist_manage(action="remove", code="{代码}")
 ```
 
 ### 3. 查看自选清单
 
-```bash
-python3 scripts/watchlist.py --action list
+```
+watchlist_manage(action="list")
 ```
 
 输出表格格式：
@@ -41,8 +41,8 @@ python3 scripts/watchlist.py --action list
 
 ### 4. 行情监控
 
-```bash
-python3 scripts/watchlist.py --action monitor
+```
+watchlist_manage(action="monitor")
 ```
 
 这是最常用的功能。输出要求：
@@ -65,24 +65,24 @@ python3 scripts/watchlist.py --action monitor
 
 对于涨跌幅异常的股票（超过3%），主动用搜索引擎简要查询原因：
 
-```bash
-python3 scripts/search.py --type news --query "{股票名} 最新消息"
+```
+search(query="{股票名} 最新消息", search_type="news")
 ```
 
 ### 5. 记录研究结果
 
 当其他技能（看票分析/深度研究）完成分析后，可调用此功能存档：
 
-```bash
-python3 scripts/watchlist.py --action update-research --code "{代码}" --mode "{模式}" --findings "{关键发现}" --promises "{承诺1;承诺2}"
+```
+watchlist_manage(action="update-research", code="{代码}", mode="{模式}", findings="{关键发现}", promises="{承诺1;承诺2}")
 ```
 
 ### 6. 检查研究历史
 
 在执行深度研究前，先检查目标公司是否有历史研究：
 
-```bash
-python3 scripts/watchlist.py --action check-research --code "{代码}"
+```
+watchlist_manage(action="check-research", code="{代码}")
 ```
 
 如果有历史研究记录，告知用户：
