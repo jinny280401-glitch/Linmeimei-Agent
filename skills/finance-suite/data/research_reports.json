@@ -1,0 +1,142 @@
+{
+  "sources": [
+    {
+      "type": "wechat",
+      "name": "Goldman Sachs",
+      "wechat_id": "Huaban1925",
+      "description": "每日Pitch + 投行研报汇总",
+      "access": "微信搜索公众号关注"
+    },
+    {
+      "type": "ima",
+      "name": "IMA知识库",
+      "url": "https://ima.qq.com/wiki/?shareId=3c87d42856fecad9a79b2782ceeb11834320752f4467d1ce4309fee45423f6fb",
+      "description": "2026年八大顶级投行研报-每日更新3+次",
+      "access": "需登录IMA"
+    }
+  ],
+  "featured_reports": [
+    {
+      "id": 1,
+      "title": "今日Pitch-0504",
+      "date": "2026-05-04",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 2,
+      "title": "今日Pitch-0503",
+      "date": "2026-05-03",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 3,
+      "title": "今日Pitch-0502",
+      "date": "2026-05-02",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 4,
+      "title": "今日Pitch-0501",
+      "date": "2026-05-01",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 5,
+      "title": "今日Pitch-0430",
+      "date": "2026-04-30",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 6,
+      "title": "今日Pitch-0429",
+      "date": "2026-04-29",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 7,
+      "title": "今日Pitch-0428",
+      "date": "2026-04-28",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 8,
+      "title": "今日Pitch-0427",
+      "date": "2026-04-27",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 9,
+      "title": "今日Pitch-0426",
+      "date": "2026-04-26",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 10,
+      "title": "今日Pitch-0425",
+      "date": "2026-04-25",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    }
+  ],
+  "tags": ["每日推荐", "投资机会", "综合"],
+  "report_sources": ["Goldman Sachs"]
+}
