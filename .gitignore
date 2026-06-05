@@ -1,0 +1,24 @@
+# 敏感配置
+.env
+*.env
+
+# 运行时/缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyc
+*.log
+/memory/.dreams/
+/memory/2026-*.md
+
+# 交接用临时文件（不属于Agent核心）
+skills/weekly-digest/digest_windows.py
+skills/weekly-digest/run.bat
+skills/weekly-digest/操作说明.md
+skills/weekly-digest/HANDOVER.md
+skills/weekly-digest/scripts/digest.py.bak
+skills/weekly-digest/scripts/test_filter.py
+skills/weekly-digest/scripts/CHANGELOG.md
+
+# 草稿
+mcp-config.*.draft.json
